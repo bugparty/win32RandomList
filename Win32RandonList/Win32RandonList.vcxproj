@@ -77,6 +77,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Codec.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="CsvReader.h" />
     <ClInclude Include="EditRow.h" />
@@ -89,6 +90,7 @@
     <ClInclude Include="Win32RandonList.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Codec.cpp" />
     <ClCompile Include="CsvReader.cpp" />
     <ClCompile Include="EditRow.cpp" />
     <ClCompile Include="EditsWin.cpp" />

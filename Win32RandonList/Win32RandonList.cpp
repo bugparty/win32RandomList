@@ -6,14 +6,16 @@
 using namespace std;
 #define MAX_LOADSTRING 100
 #define IDC_MAIN_STATUS 101
+#define IDC_HEADER 102
 
 // Global Variables:
-HINSTANCE hInst;								// current instance
-HWND hWnd;
+static HINSTANCE hInst;								// current instance
+static HWND hWnd;
 TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
 TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
 int cxChar, cyChar;
-CsvReader csvReader;
+static CsvReader csvReader;
+static HWND hStatusbar, hHeader;
 
 // Forward declarations of functions included in this code module:
 ATOM				MyRegisterClass(HINSTANCE hInstance);
@@ -22,6 +24,7 @@ LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 void InitStatusbar(HWND hStatusbar);
 BOOL OpenDialog(HWND hWnd);
+void OnHeaderSize(HWND hWnd, UINT state, int cx, int cy);
 
 const TCHAR * strPOF = L"无文件打开，请打开文件\n";
 
@@ -106,7 +109,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    
    hInst = hInstance; // Store instance handle in our global variable
 
-   hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
+   hWnd = CreateWindow(szWindowClass, szTitle, 
+	   WS_OVERLAPPEDWINDOW | WS_VSCROLL,
       CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, hInstance, NULL);
 
    if (!hWnd)
@@ -138,12 +142,17 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+	static int cxClient, cyClient;
+	static int cxChar, cyChar;
+	static int iScollPos;
+
+	
 	int wmId, wmEvent;
 	PAINTSTRUCT ps;
 	HDC hdc;
 	wstring s;
-	HWND hStatusbar;
-	
+	RECT rc = { 0, 0, 0, 0 };
+	TCHAR szText[200];
 	switch (message)
 	{
 	case WM_COMMAND:
@@ -160,7 +169,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case IDM_FILE_OPEN:
 			OpenDialog(hWnd);
-			
+			SetScrollPos(hWnd, SB_VERT, iScollPos, FALSE);
+			InvalidateRect(hWnd, NULL, TRUE);
 			break;
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
@@ -177,6 +187,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		cyChar = tm.tmHeight + tm.tmExternalLeading;
 
 		ReleaseDC(hWnd, hdc);
+		// Create the Header control
+		
+		//hHeader = CreateWindowEx(0, WC_HEADER, 0,
+		//	HDS_BUTTONS | WS_CHILD | WS_VISIBLE,
+		//	0, 0, 0, 0,
+		//	hWnd, (HMENU)IDC_HEADER, hInst, 0);
+		//// Resize the header control
+		//GetClientRect(hWnd, &rc);
+		//OnHeaderSize(hWnd, 0, rc.right, rc.bottom);
+
+		//// Set the font for the header common control
+		//SendMessage(hHeader, WM_SETFONT, (WPARAM)GetStockObject(DEFAULT_GUI_FONT), 0);
+		// Create the StatusBar
 		hStatusbar = CreateWindowEx(0, STATUSCLASSNAME, NULL,
 			WS_CHILD | WS_VISIBLE | SBARS_SIZEGRIP, 0, 0, 0, 0,
 			hWnd, (HMENU)IDC_MAIN_STATUS, GetModuleHandle(NULL), NULL);
@@ -184,7 +207,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		// the parent window so that it can be retrieved for later use.
 		SetWindowLongPtr(hWnd, GWLP_USERDATA, (LONG_PTR)hStatusbar);
 		InitStatusbar(hStatusbar);
+		// Add 4 Header items
+		
+		for (UINT i = 0; i < 4; i++)
+		{
+			HDITEM hdi = { 0 };
+			hdi.mask = HDI_WIDTH | HDI_FORMAT | HDI_TEXT;
+			hdi.cxy = rc.right / 4;
+			hdi.fmt = HDF_CENTER;
+			swprintf_s(szText, 200, L"Header  %d", i);
+			hdi.pszText = szText;
+			hdi.cchTextMax = 200;
 
+			SendMessage(hHeader, HDM_INSERTITEM, i, (LPARAM)&hdi);
+		}
 
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd, &ps);
@@ -198,12 +234,72 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		wsprintf(buffer, L"%d ", cxChar);
 		s += buffer;
 		
-		TextOut(hdc, 0, 20, s.c_str(), s.length());
+		//TextOut(hdc, 0, 20, s.c_str(), s.length());
 
 		if (csvReader.isOpened()){
+			
+			const int columnCount = csvReader.getHeadRow()->getColumnSize();
+			wstring *heads = new wstring[columnCount];
+			
+			for (int i = 0; i < columnCount; i++){
+				heads[i].append(csvReader.getHeadRow()->getColumn(i));
+			}
 
+			TextOut(hdc, 0, 0, (LPWSTR)csvReader.getHeader(), lstrlen(csvReader.getHeader()));
+
+
+			int curStart = 0;
+			EditRow *per;
+			int count;
+			curStart = iScollPos;
+			int end = curStart + cyClient / cyChar;
+			for (int i = curStart ; i < end; i++){
+				
+				csvReader.getRow(i,&per);
+				count = per->getColumnSize();
+				for (int j = 0; j < count; j++){
+					TextOut(hdc, j*COLUMN_WIDTH, (i-curStart + 1)*cyChar, per->getColumn(j),lstrlen(per->getColumn(j)));
+				}
+				
+			}
 		}
 		EndPaint(hWnd, &ps);
+		break;
+	case WM_VSCROLL:
+		switch (LOWORD(wParam)){
+		case SB_LINEUP:
+		
+			iScollPos -= 1;
+			break;
+		case SB_LINEDOWN:
+			iScollPos += 1;
+			break;
+		case SB_PAGEUP:
+			iScollPos -= cyClient / cyChar;
+			break;
+		case SB_PAGEDOWN:
+			iScollPos += cyClient / cyChar;
+			break;
+		case SB_THUMBPOSITION:
+			iScollPos = HIWORD(wParam);
+			break;
+
+		default:
+			break;
+		}
+		iScollPos =max(0, min(iScollPos, csvReader.getRowCount()));
+		if (iScollPos != GetScrollPos(hWnd, SB_VERT))
+		{
+			SetScrollPos(hWnd, SB_VERT, iScollPos, TRUE);
+			InvalidateRect(hWnd, NULL, TRUE);
+		}
+		
+		break;
+	
+	case WM_SIZE:
+		cxClient = LOWORD(lParam);
+		cyClient = HIWORD(lParam);
+		//InvalidateRect(hStatusbar, NULL, TRUE);
 		break;
 	case WM_DESTROY:
 		PostQuitMessage(0);
@@ -270,7 +366,8 @@ BOOL OpenDialog(HWND hwnd){
 	wstring r(s.str());
 	SendMessage((HWND)GetWindowLongPtr(hWnd, GWLP_USERDATA), SB_SETTEXT, 0, (LPARAM)L"编辑中");
 	SendMessage((HWND)GetWindowLongPtr(hWnd, GWLP_USERDATA), SB_SETTEXT, 1, (LPARAM)r.c_str());
-		
+	SetScrollRange(hwnd, SB_VERT, 0, csvReader.getRowCount(), FALSE);
+	
 	return TRUE;
 
 }
@@ -279,4 +376,20 @@ void InitStatusbar(HWND hStatusbar)
 	int statwidths[] = { 150, -1 };
 	SendMessage(hStatusbar, SB_SETPARTS, sizeof(statwidths) / sizeof(int), (LPARAM)statwidths);
 	SendMessage(hStatusbar, SB_SETTEXT, 0, (LPARAM)L"无文件打开");
+}
+void OnHeaderSize(HWND hWnd, UINT state, int cx, int cy)
+{
+	// Adjust the position and the layout of the Header control
+	RECT rc = { 0, 0, cx, cy };
+	WINDOWPOS wp = { 0 };
+	HDLAYOUT hdl = { &rc, &wp };
+
+
+	// hdl.wp retrieves information used to set the size and postion of the  
+	// header control within the target rectangle of the parent window. 
+	SendMessage(hHeader, HDM_LAYOUT, 0, (LPARAM)&hdl);
+
+	// Set the size and position of the header control based on hdl.wp.
+	SetWindowPos(hHeader, wp.hwndInsertAfter,
+		wp.x, wp.y, wp.cx, wp.cy + 8, wp.flags);
 }

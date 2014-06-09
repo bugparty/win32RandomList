@@ -7,7 +7,7 @@ EditRow::EditRow(){
 	pszBufs = NULL;
 
 	m_columnSize = 0;
-#ifdef TEST
+#ifdef TEST_EDIT_ROW_LIFECYCLE
 	wcerr << "hello EditRow " << this << endl;
 #endif
 
@@ -27,20 +27,21 @@ EditRow::EditRow(const EditRow &orig){
 	
 
 }
-EditRow & EditRow::operator =(const EditRow &orig){
+EditRow & EditRow::operator =( EditRow &orig){
 	if (this == &orig){
 		return *this;
 	}
 
 	freeMem();
-	pszBufs = (TCHAR **)malloc(sizeof(TCHAR *)*m_columnSize);
-	assert(pszBufs != NULL);
+	m_columnSize = orig.m_columnSize;
+	initMem();
+	TCHAR buf[MAX_COLUMN_SIZE];
 
-	for (int i = 0; i < m_columnSize; i++){
-		pszBufs[i] = (TCHAR*)malloc(MAX_COLUMN_SIZE);
-		memcpy(pszBufs[i], orig.pszBufs[i], MAX_COLUMN_SIZE);
-		assert(pszBufs[i] != NULL);
+	for (int i = 0; i < orig.getColumnSize(); i++){
+
+		setColumn(i, orig.getColumn(i));
 	}
+
 	return *this;
 
 }
@@ -49,14 +50,14 @@ EditRow::EditRow(int columnSize)
 	pszBufs = NULL;
 	m_columnSize = columnSize;
 	initMem();
-#ifdef TEST
+#ifdef TEST_EDIT_ROW_LIFECYCLE
 	wcerr << "hello EditRow " << this << endl;
 #endif
 
 }
 EditRow::~EditRow()
 {
-#ifdef TEST
+#ifdef TEST_EDIT_ROW_LIFECYCLE
 	wcerr << L"byebye EditRow" << this << endl;
 #endif
 	if (pszBufs)
@@ -128,13 +129,13 @@ void EditRow::freeMem()
 }
 
 
-int EditRow::getRowSize()
+int EditRow::getColumnSize()
 {
 	return m_columnSize;
 }
 
 
-TCHAR* EditRow::getRow(int pos)
+TCHAR* EditRow::getColumn(int pos)
 {
 	if (!pszBufs || !validatePos(pos))
 		return NULL;

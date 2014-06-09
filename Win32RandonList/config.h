@@ -1,3 +1,5 @@
 #define MAX_ROWS 10
 #define MAX_LINE 200
 #define MAX_COLUMN_SIZE 25
+#define MAX_ROW_LOAD 300000
+#define COLUMN_WIDTH 100

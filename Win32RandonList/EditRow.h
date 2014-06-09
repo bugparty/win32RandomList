@@ -8,13 +8,13 @@ public:
 	~EditRow();
 	EditRow(int columnSize);
 	EditRow::EditRow(const EditRow &orig);
-	EditRow & EditRow::operator =(const EditRow &orig);
+	EditRow & EditRow::operator =( EditRow &orig);
 
 	void setColumnSize(int size);
 	bool setColumn(int pos,TCHAR* text);
 
-	int getRowSize();
-	TCHAR* getRow(int pos);
+	int getColumnSize();
+	TCHAR* getColumn(int pos);
 private:
 	bool initMem();
 	void freeMem();
