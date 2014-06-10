@@ -29,7 +29,12 @@ void testCsvReader(){
 	for (int i = 0; i < per->getColumnSize(); i++){
 		wcout << L"pos " << i << L"`s value:" << per->getColumn(i) << endl;
 	}
-
+	
+	EditRow r1 = cr.getRow(0);
+	EditRow r2 = cr.getRow(1);
+	wcout << r1.serial() << r2.serial() << endl;
+	cr.swap(r1, r2);
+	wcout << r1.serial() << r2.serial() << endl;
 
 }
 void testRowHelper(){

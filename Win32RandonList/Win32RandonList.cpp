@@ -13,9 +13,11 @@ static HINSTANCE hInst;								// current instance
 static HWND hWnd;
 TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
 TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
+TCHAR szFailedToLoadCommCtl[MAX_LOADSTRING];
 int cxChar, cyChar;
 static CsvReader csvReader;
 static HWND hStatusbar, hHeader;
+static HMENU hMenu;
 
 // Forward declarations of functions included in this code module:
 ATOM				MyRegisterClass(HINSTANCE hInstance);
@@ -43,6 +45,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	// Initialize global strings
 	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
 	LoadString(hInstance, IDC_WIN32RANDONLIST, szWindowClass, MAX_LOADSTRING);
+	LoadString(hInstance, IDS_FAILED_TO_INIT_COMM_CTL, szFailedToLoadCommCtl, MAX_LOADSTRING);
 	MyRegisterClass(hInstance);
 
 	// Perform application initialization:
@@ -52,7 +55,7 @@ int APIENTRY _tWinMain(_In_ HINSTANCE hInstance,
 	}
 
 	hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_WIN32RANDONLIST));
-
+	hMenu = (HMENU)LoadMenu(hInstance, MAKEINTRESOURCE(IDC_WIN32RANDONLIST));
 	// Main message loop:
 	while (GetMessage(&msg, NULL, 0, 0))
 	{
@@ -111,7 +114,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    hWnd = CreateWindow(szWindowClass, szTitle, 
 	   WS_OVERLAPPEDWINDOW | WS_VSCROLL,
-      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, hInstance, NULL);
+      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, HMENU(hMenu), hInstance, NULL);
 
    if (!hWnd)
    {
@@ -121,8 +124,11 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    INITCOMMONCONTROLSEX iccx;
    iccx.dwSize = sizeof(INITCOMMONCONTROLSEX);
    iccx.dwICC = ICC_BAR_CLASSES;
-   if (!InitCommonControlsEx(&iccx))
+   if (!InitCommonControlsEx(&iccx)){
+	   MessageBox(hWnd, szFailedToLoadCommCtl, szTitle, MB_OK);
 	   return FALSE;
+   }
+	  
 
    ShowWindow(hWnd, nCmdShow);
    UpdateWindow(hWnd);
@@ -172,6 +178,47 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			SetScrollPos(hWnd, SB_VERT, iScollPos, FALSE);
 			InvalidateRect(hWnd, NULL, TRUE);
 			break;
+		case IDM_RANDOMSORT_ITEM_1:
+			csvReader.randSort(0);
+			InvalidateRect(hWnd, NULL, TRUE);
+			break;
+		case IDM_RANDOMSORT_ITEM_2:
+			csvReader.randSort(1);
+			InvalidateRect(hWnd, NULL, TRUE);
+			break;
+		case IDM_RANDOMSORT_ITEM_3:
+			csvReader.randSort(2);
+			InvalidateRect(hWnd, NULL, TRUE);
+			break;
+		case IDM_RANDOMSORT_ITEM_4:
+			csvReader.randSort(3);
+			InvalidateRect(hWnd, NULL, TRUE);
+			break;
+		case IDM_RANDOMSORT_ITEM_5:
+			csvReader.randSort(4);
+			InvalidateRect(hWnd, NULL, TRUE);
+			break;
+		case IDM_RANDOMSORT_ITEM_6:
+			csvReader.randSort(5);
+			InvalidateRect(hWnd, NULL, TRUE);
+			break;
+		case IDM_RANDOMSORT_ITEM_7:
+			csvReader.randSort(6);
+			InvalidateRect(hWnd, NULL, TRUE);
+			break;
+		case IDM_RANDOMSORT_ITEM_8:
+			csvReader.randSort(7);
+			InvalidateRect(hWnd, NULL, TRUE);
+			break;
+		case IDM_RANDOMSORT_ITEM_9:
+			csvReader.randSort(8);
+			InvalidateRect(hWnd, NULL, TRUE);
+			break;
+		case IDM_RANDOMSORT_ITEM_10:
+			csvReader.randSort(9);
+			InvalidateRect(hWnd, NULL, TRUE);
+			break;
+
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
 		}
@@ -242,6 +289,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			wstring *heads = new wstring[columnCount];
 			
 			for (int i = 0; i < columnCount; i++){
+
 				heads[i].append(csvReader.getHeadRow()->getColumn(i));
 			}
 
@@ -367,7 +415,18 @@ BOOL OpenDialog(HWND hwnd){
 	SendMessage((HWND)GetWindowLongPtr(hWnd, GWLP_USERDATA), SB_SETTEXT, 0, (LPARAM)L"编辑中");
 	SendMessage((HWND)GetWindowLongPtr(hWnd, GWLP_USERDATA), SB_SETTEXT, 1, (LPARAM)r.c_str());
 	SetScrollRange(hwnd, SB_VERT, 0, csvReader.getRowCount(), FALSE);
+	const int columnCount = csvReader.getHeadRow()->getColumnSize();
 	
+	HMENU hmRand = GetSubMenu(hMenu, 1);
+	assert(hmRand != NULL);
+	for (int i = 0; i < columnCount; i++){
+		wstring s(L"按 ");
+		s += csvReader.getHeadRow()->getColumn(i);
+		s += L"排序";
+		AppendMenu(hmRand, MF_STRING, IDM_RANDOMSORT_ITEM_1 + i,s.c_str());
+	}
+	SetMenu(hWnd, hMenu);
+	GetSystemMenu(hWnd, TRUE);
 	return TRUE;
 
 }
@@ -375,7 +434,7 @@ void InitStatusbar(HWND hStatusbar)
 {
 	int statwidths[] = { 150, -1 };
 	SendMessage(hStatusbar, SB_SETPARTS, sizeof(statwidths) / sizeof(int), (LPARAM)statwidths);
-	SendMessage(hStatusbar, SB_SETTEXT, 0, (LPARAM)L"无文件打开");
+	SendMessage(hStatusbar, SB_SETTEXT, 0, (LPARAM)_T("无文件打开"));
 }
 void OnHeaderSize(HWND hWnd, UINT state, int cx, int cy)
 {

@@ -6,13 +6,14 @@
 RowHelper::RowHelper(TCHAR* rowString)
 {
 	int pos[MAX_ROWS+1];
-	int count;
-	count = findColons(rowString, pos, MAX_ROWS);
-
-	er.setColumnSize(count+1);
-
+	int columnCount,strLen;
+	columnCount = findColons(rowString, pos, MAX_ROWS);
+	strLen = lstrlen(rowString);
+	er.setColumnSize(columnCount+1);
+	//pos stores the position array
+	pos[columnCount] = strLen;
 	
-	pos[count] = lstrlen(rowString);
+	
 
 	TCHAR buffer[MAX_COLUMN_SIZE];
 	wmemcpy(buffer, rowString, pos[0]);
@@ -23,7 +24,7 @@ RowHelper::RowHelper(TCHAR* rowString)
 
 	er.setColumn(0, buffer);
 
-	for (int i = 0; i < count; i++){
+	for (int i = 0; i < columnCount; i++){
 		wmemcpy(buffer, rowString + pos[i]+1, pos[i + 1] - pos[i]-1);
 		buffer[pos[i + 1] - pos[i]-1] = L'\0';
 #ifdef TEST

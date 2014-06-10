@@ -17,7 +17,10 @@ private:
 	void load_utf8();
 	void load_unicode();
 	const TCHAR *filepath;
+	
 public:
+	void swap(EditRow& left, EditRow &right);
+	void swapRow(int pos, EditRow& left, EditRow &right);
 	CsvReader(TCHAR* filePath);
 	bool isOpened();
 	bool getHeaderPtr(TCHAR** header);
@@ -25,8 +28,10 @@ public:
 	bool getHeadRow(EditRow** ppEr);
 	EditRow *getHeadRow();
 	bool getRow(int pos, EditRow** ppEr);
+	EditRow &getRow(int pos);
 	bool setRow(int pos, EditRow & er);
 	int open(const TCHAR * filepath);
 	int getRowCount();
+	void randSort(int column);
 };
 

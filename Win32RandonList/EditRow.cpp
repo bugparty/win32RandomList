@@ -12,6 +12,7 @@ EditRow::EditRow(){
 #endif
 
 }
+
 EditRow::EditRow(const EditRow &orig){
 	EditRow(orig.m_columnSize);
 	m_columnSize = orig.m_columnSize;
@@ -64,7 +65,16 @@ EditRow::~EditRow()
 		freeMem();
 
 }
+wstring EditRow::serial(){
+	wstring s;
+	for (int i = 0; i < m_columnSize-1; i++){
+		s += getColumn(i);
+		s += L",";
+	}
+	s += getColumn(m_columnSize - 1);
+	return s;
 
+}
 
 void EditRow::setColumnSize(int size)
 {

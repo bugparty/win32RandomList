@@ -15,7 +15,12 @@ CsvReader::~CsvReader()
 	if (fp!=NULL)
 		fclose(fp);
 }
-
+EditRow &CsvReader::getRow(int pos){
+	if (pos < 0 || pos > rowCount){
+		return rows[0];
+	}
+	return (rows[pos]);
+}
 bool CsvReader::getRow(int pos, EditRow** ppEr)
 {
 	if (pos < 0 || pos > rowCount){
@@ -29,6 +34,14 @@ EditRow* CsvReader::getHeadRow()
 {
 
 	return &headRow;
+}
+void CsvReader::swapRow(int pos, EditRow& left, EditRow &right){
+	TCHAR buf[COLUMN_WIDTH];
+	lstrcpy(buf, left.getColumn(pos));
+	left.setColumn(pos, right.getColumn(pos));
+	lstrcpy(right.getColumn(pos), buf);
+
+
 }
 bool CsvReader::getHeadRow(EditRow** ppEr)
 {
@@ -45,7 +58,11 @@ bool CsvReader::setRow(int pos, EditRow & er){
 	return TRUE;
 }
 
-
+void CsvReader::swap(EditRow& left, EditRow &right){
+	EditRow t = left;
+	left = right;
+	right = t;
+}
 CsvReader::CsvReader(TCHAR* filePath)
 {
 	
@@ -57,6 +74,17 @@ int CsvReader::getRowCount(){
 }
 TCHAR* CsvReader::getHeader(){
 	return headString;
+}
+void CsvReader::randSort(int column){
+	for (int i = 0; i < rowCount; i++)
+	{
+		int j;
+		do{
+			j = rand() % rowCount;
+		} while (j == i);
+		swapRow(column,rows[i], rows[j]);
+		
+	}
 }
 bool CsvReader::getHeaderPtr(TCHAR** header)
 {

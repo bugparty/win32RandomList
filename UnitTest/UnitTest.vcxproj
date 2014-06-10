@@ -81,6 +81,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\Win32RandonList\Codec.cpp" />
     <ClCompile Include="..\Win32RandonList\CsvReader.cpp" />
     <ClCompile Include="..\Win32RandonList\EditRow.cpp" />
     <ClCompile Include="..\Win32RandonList\EditsWin.cpp" />
