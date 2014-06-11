@@ -27,6 +27,7 @@ INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 void InitStatusbar(HWND hStatusbar);
 BOOL OpenDialog(HWND hWnd);
 void OnHeaderSize(HWND hWnd, UINT state, int cx, int cy);
+BOOL OpenSaveDialog(HWND hwnd);
 
 const TCHAR * strPOF = L"无文件打开，请打开文件\n";
 
@@ -178,6 +179,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			SetScrollPos(hWnd, SB_VERT, iScollPos, FALSE);
 			InvalidateRect(hWnd, NULL, TRUE);
 			break;
+		case IDM_FILE_SAVE:
+			OpenSaveDialog(hWnd);
+			break;
 		case IDM_RANDOMSORT_ITEM_1:
 			csvReader.randSort(0);
 			InvalidateRect(hWnd, NULL, TRUE);
@@ -305,9 +309,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				
 				csvReader.getRow(i,&per);
 				count = per->getColumnSize();
-				for (int j = 0; j < count; j++){
+				int j;
+				for (j = 0; j < count-1; j++){
 					TextOut(hdc, j*COLUMN_WIDTH, (i-curStart + 1)*cyChar, per->getColumn(j),lstrlen(per->getColumn(j)));
 				}
+				wstring sTailRow(per->getColumn(j));
+				int fpos = -1;
+				if (fpos = sTailRow.find(_T("\n"))){
+					sTailRow.erase(fpos, 2);
+				}
+				TextOut(hdc, j*COLUMN_WIDTH, (i - curStart + 1)*cyChar,
+					sTailRow.c_str(),
+					sTailRow.length());
+				
 				
 			}
 		}
@@ -377,11 +391,22 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 	}
 	return (INT_PTR)FALSE;
 }
+
+//Save Document
+BOOL SaveCSV(const TCHAR*filepath){
+	csvReader.save(filepath);
+	return TRUE;
+}
+int DialogAskTitle(){
+	return MessageBox(hWnd, _T("该CSV文件是否有标题"), _T("询问"), MB_YESNO|MB_ICONQUESTION);
+}
 //Load Document
 BOOL LoadCSV(const TCHAR * filepath){
-	csvReader.open(filepath);
-	HWND hStatusbar = (HWND)GetWindowLongPtr(hWnd, GWLP_USERDATA);
-
+	int ret = DialogAskTitle();
+	if (ret == IDYES)
+		csvReader.open(filepath,1);
+	else
+		csvReader.open(filepath);
 	return TRUE;
 }
 //Display the openfile common dialog
@@ -420,13 +445,48 @@ BOOL OpenDialog(HWND hwnd){
 	HMENU hmRand = GetSubMenu(hMenu, 1);
 	assert(hmRand != NULL);
 	for (int i = 0; i < columnCount; i++){
-		wstring s(L"按 ");
+		wstring s(L"以“");
 		s += csvReader.getHeadRow()->getColumn(i);
-		s += L"排序";
+		s += L"”随机排序";
 		AppendMenu(hmRand, MF_STRING, IDM_RANDOMSORT_ITEM_1 + i,s.c_str());
 	}
 	SetMenu(hWnd, hMenu);
 	GetSystemMenu(hWnd, TRUE);
+	return TRUE;
+
+}
+//Display the openfile common dialog
+BOOL OpenSaveDialog(HWND hwnd){
+	OPENFILENAME ofn;
+	
+	TCHAR szFile[MAX_PATH];
+
+
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);
+	ofn.lpstrFile = szFile;
+	ofn.lpstrFile[0] = '\0';
+	ofn.hwndOwner = hwnd;
+	ofn.nMaxFile = sizeof(szFile);
+	ofn.lpstrFilter = TEXT("EXCEL csv files(*.csv)\0*.csv\0");
+	ofn.nFilterIndex = 1;
+	ofn.lpstrInitialDir = NULL;
+	ofn.lpstrFileTitle = _T("123.csv");
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+	wstring s1, s2;
+	if (GetSaveFileName(&ofn)){
+		s1 += L"正在保存：";
+		s2 += ofn.lpstrFile;
+		s1 += s2;
+		SendMessage((HWND)GetWindowLongPtr(hWnd, GWLP_USERDATA), SB_SETTEXT, 1, (LPARAM)s1.c_str());
+		SaveCSV(ofn.lpstrFile);
+	}
+	std::wostringstream s;
+	s << L"已经保存" << s2 << "     " << L"共保存了" << csvReader.getRowCount() << L"条";
+	wstring r(s.str());
+	SendMessage((HWND)GetWindowLongPtr(hWnd, GWLP_USERDATA), SB_SETTEXT, 0, (LPARAM)L"编辑中");
+	SendMessage((HWND)GetWindowLongPtr(hWnd, GWLP_USERDATA), SB_SETTEXT, 1, (LPARAM)r.c_str());
+
 	return TRUE;
 
 }

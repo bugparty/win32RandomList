@@ -17,8 +17,10 @@ private:
 	void load_utf8();
 	void load_unicode();
 	const TCHAR *filepath;
+	int skiplines;
 	
 public:
+	void CsvReader::load_gb2312();
 	void swap(EditRow& left, EditRow &right);
 	void swapRow(int pos, EditRow& left, EditRow &right);
 	CsvReader(TCHAR* filePath);
@@ -30,8 +32,9 @@ public:
 	bool getRow(int pos, EditRow** ppEr);
 	EditRow &getRow(int pos);
 	bool setRow(int pos, EditRow & er);
-	int open(const TCHAR * filepath);
+	int CsvReader::open(const TCHAR * filepath, int skiplines = 0);
 	int getRowCount();
 	void randSort(int column);
+	void save(const TCHAR*filepath);
 };
 

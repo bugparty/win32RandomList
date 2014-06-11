@@ -1,7 +1,8 @@
 #include "stdafx.h"
 #include "CsvReader.h"
 #include "Codec.h"
-using namespace std;
+#include <string>
+
 CsvReader::CsvReader()
 {
 	rowCount = 0;
@@ -94,17 +95,21 @@ bool CsvReader::getHeaderPtr(TCHAR** header)
 bool CsvReader::isOpened(){
 	return isOpen;
 }
+
 void CsvReader::load_unicode(){
 	fp = _tfopen(filepath, L"rt,ccs=UNICODE");
 	assert(fp != NULL);
 	TCHAR buf[80];
-	fwscanf(fp, L"%s", buf);
+	while (skiplines--)
+		fgetws(buf, COLUMN_WIDTH - 1, fp);
+
+	fgetws(buf, COLUMN_WIDTH - 1, fp);
 	lstrcpy(headString, buf);
 	RowHelper rh(buf);
 	EditRow &er = rh.getObj();
 	headRow = er;
 	while (!feof(fp)){
-		fwscanf(fp, L"%s", buf);
+		fgetws(buf, COLUMN_WIDTH - 1, fp);
 		RowHelper r(buf);
 		rows[rowCount++] = r.getObj();
 
@@ -115,13 +120,17 @@ void CsvReader::load_utf8(){
 	fp = _tfopen(filepath, L"rt,ccs=UNICODE");
 	assert(fp != NULL);
 	TCHAR buf[80];
-	fwscanf(fp, L"%s", buf);
+	while (skiplines--)
+		fgetws(buf, COLUMN_WIDTH - 1, fp);
+
+	fgetws(buf, COLUMN_WIDTH - 1, fp);
 	lstrcpy(headString, buf);
 	RowHelper rh(buf);
 	EditRow &er = rh.getObj();
 	headRow = er;
 	while (!feof(fp)){
-		fwscanf(fp, L"%s", buf);
+		
+		fgetws(buf, COLUMN_WIDTH - 1, fp);
 		RowHelper r(buf);
 		rows[rowCount++] = r.getObj();
 		if (rowCount >= MAX_ROW_LOAD)
@@ -130,9 +139,55 @@ void CsvReader::load_utf8(){
 	}
 	isOpen = true;
 }
-int CsvReader::open(const TCHAR * filepath)
+void CsvReader::load_gb2312(){
+	fp = _tfopen(filepath, L"r");
+	assert(fp != NULL);
+	char buf[COLUMN_WIDTH];
+	TCHAR bufw[COLUMN_WIDTH];
+	while (skiplines--)
+		fgets(buf, COLUMN_WIDTH - 1, fp);
+
+	fgets(buf, COLUMN_WIDTH - 1, fp);
+	MultiByteToWideChar(CP_ACP, MB_COMPOSITE, buf, -1, bufw, COLUMN_WIDTH);
+	lstrcpy(headString, bufw);
+	RowHelper rh(bufw);
+	EditRow &er = rh.getObj();
+	headRow = er;
+	size_t len;
+	while (!feof(fp)){
+		
+		fgets(buf, COLUMN_WIDTH-1, fp);
+
+		MultiByteToWideChar(CP_ACP, MB_COMPOSITE, buf, -1, bufw, COLUMN_WIDTH);
+		RowHelper r(bufw);
+		rows[rowCount++] = r.getObj();
+		if (rowCount >= MAX_ROW_LOAD)
+			break;
+
+	}
+	isOpen = true;
+}
+void CsvReader::save(const TCHAR*filepath){
+	fp = _tfopen(filepath, _T("w"));
+	char buf[COLUMN_WIDTH];
+	WideCharToMultiByte(CP_ACP, WC_COMPOSITECHECK, headRow.serial().c_str(), -1,
+		buf, COLUMN_WIDTH - 1, NULL, NULL);
+
+	fprintf(fp, "%s", buf);
+
+	for (int i = 0; i < rowCount; i++){
+		WideCharToMultiByte(CP_ACP, WC_COMPOSITECHECK, rows[i].serial().c_str(), -1,
+			buf, COLUMN_WIDTH - 1, NULL, NULL);
+
+		fprintf(fp, "%s", buf);
+	}
+	fclose(fp);
+
+}
+int CsvReader::open(const TCHAR * filepath, int skiplines)
 {
 	rowCount = 0;
+	this->skiplines = skiplines;
 	this->filepath = filepath;
 	switch (judge_file_codec(filepath)){
 	case TX_UNICODE16:
@@ -142,7 +197,7 @@ int CsvReader::open(const TCHAR * filepath)
 		load_utf8();
 		break;
 	default:
-		load_utf8();
+		load_gb2312();
 		break;
 	}
 	

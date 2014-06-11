@@ -133,7 +133,7 @@ bool is_utf8_code(const char * str, int strSize)
 
 	printf("%d %d\n", utf8_yes, utf8_no);
 	if (utf8_yes == 0 && utf8_no == 0) //in case of ascii
-		return true;
+		return false;
 
 	int ret = (100 * utf8_yes) / (utf8_yes + utf8_no);
 	if (ret > 90) {
@@ -144,3 +144,44 @@ bool is_utf8_code(const char * str, int strSize)
 	}
 }
 
+bool is_gb2312_code(const char * str, int strSize)
+{
+	unsigned one_byte = 0X00; //binary 00000000
+
+	int gb2312_yes = 0;
+	int gb2312_no = 0;
+
+	unsigned char k = 0;
+
+	unsigned char c = 0;
+	for (unsigned int  i = 0; i < strSize;) {
+		c = (unsigned char)str[i];
+		if (c >> 7 == one_byte) {
+			i++;
+			continue;
+		}
+		else if (c >= 0XA1 && c <= 0XF7) {
+			k = (unsigned char)str[i + 1];
+			if (k >= 0XA1 && k <= 0XFE) {
+				gb2312_yes++;
+				i += 2;
+				continue;
+			}
+		}
+
+		gb2312_no++;
+		i += 2;
+	}
+
+	printf("%d %d\n", gb2312_yes, gb2312_no);
+	if (gb2312_yes == 0 && gb2312_no == 0) //in case of ascii
+		return false;
+
+	int ret = (100 * gb2312_yes) / (gb2312_yes + gb2312_no);
+	if (ret > 90) {
+		return 1;
+	}
+	else {
+		return 0;
+	}
+}
