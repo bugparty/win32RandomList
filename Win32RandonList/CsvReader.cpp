@@ -36,6 +36,7 @@ EditRow* CsvReader::getHeadRow()
 
 	return &headRow;
 }
+//实现两列的交换，直接传递两行的地址就行
 void CsvReader::swapRow(int pos, EditRow& left, EditRow &right){
 	TCHAR buf[COLUMN_WIDTH];
 	lstrcpy(buf, left.getColumn(pos));
@@ -70,12 +71,14 @@ CsvReader::CsvReader(TCHAR* filePath)
 	open(filePath);
 	
 }
+//返回一共加载了多少行
 int CsvReader::getRowCount(){
 	return rowCount;
 }
 TCHAR* CsvReader::getHeader(){
 	return headString;
 }
+//实现所有列每一行的随机排列
 void CsvReader::randSort(int column){
 	for (int i = 0; i < rowCount; i++)
 	{
@@ -92,6 +95,7 @@ bool CsvReader::getHeaderPtr(TCHAR** header)
 	*header = (headString);
 	return true;
 }
+//判断是否已经打开了文件
 bool CsvReader::isOpened(){
 	return isOpen;
 }
@@ -167,6 +171,7 @@ void CsvReader::load_gb2312(){
 	}
 	isOpen = true;
 }
+//将内存序列化并保存为文件，默认gbk格式输出（最兼容）
 void CsvReader::save(const TCHAR*filepath){
 	fp = _tfopen(filepath, _T("w"));
 	char buf[COLUMN_WIDTH];
@@ -184,6 +189,7 @@ void CsvReader::save(const TCHAR*filepath){
 	fclose(fp);
 
 }
+//csv文件的打开，skiplines是为了跳过csv文件的标题等无用的东西，无标题置0
 int CsvReader::open(const TCHAR * filepath, int skiplines)
 {
 	rowCount = 0;
