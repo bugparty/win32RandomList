@@ -53,13 +53,15 @@ StdAfx.h, StdAfx.cpp
     named Win32RandonList.pch and a precompiled types file named StdAfx.obj.
 
 /////////////////////////////////////////////////////////////////////////////
+config.h
+所有可以调节的参数在这里定义，具体释义在文件内
 CsvReader.cpp
 实现Csv文件的读取和写入，实现在内存中的数据结构表示和相关操作，是主界面调用的唯一接口。
 Codec.cpp
 实现文字编码的检测
 RowHelper.cpp
 帮助实例化Row对象
-Row.cpp
+EditRow.cpp
 实现Row对象，代表每一行.
 
 /////////////////////////////////////////////////////////////////////////////
