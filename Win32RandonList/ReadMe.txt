@@ -2,7 +2,6 @@
     WIN32 APPLICATION : Win32RandonList Project Overview
 ========================================================================
 
-AppWizard has created this Win32RandonList application for you.
 
 This file contains a summary of what you will find in each of the files that
 make up your Win32RandonList application.
@@ -22,7 +21,7 @@ Win32RandonList.vcxproj.filters
     "Source Files" filter).
 
 Win32RandonList.cpp
-    This is the main application source file.
+    This is the main application source file.主界面的实现
 
 /////////////////////////////////////////////////////////////////////////////
 AppWizard has created the following resources:
@@ -31,7 +30,7 @@ Win32RandonList.rc
     This is a listing of all of the Microsoft Windows resources that the
     program uses.  It includes the icons, bitmaps, and cursors that are stored
     in the RES subdirectory.  This file can be directly edited in Microsoft
-    Visual C++.
+    Visual C++.资源和菜单在这里
 
 Resource.h
     This is the standard header file, which defines new resource IDs.
@@ -54,9 +53,13 @@ StdAfx.h, StdAfx.cpp
     named Win32RandonList.pch and a precompiled types file named StdAfx.obj.
 
 /////////////////////////////////////////////////////////////////////////////
-Other notes:
-
-AppWizard uses "TODO:" comments to indicate parts of the source code you
-should add to or customize.
+CsvReader.cpp
+实现Csv文件的读取和写入，实现在内存中的数据结构表示和相关操作，是主界面调用的唯一接口。
+Codec.cpp
+实现文字编码的检测
+RowHelper.cpp
+帮助实例化Row对象
+Row.cpp
+实现Row对象，代表每一行.
 
 /////////////////////////////////////////////////////////////////////////////
